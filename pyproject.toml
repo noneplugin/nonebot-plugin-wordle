@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "nonebot_plugin_wordle"
+version = "0.1.0"
+description = "Nonebot2 wordle猜单词插件"
+authors = ["meetwq <meetwq@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/MeetWq/nonebot-plugin-wordle"
+repository = "https://github.com/MeetWq/nonebot-plugin-wordle"
+
+[tool.poetry.dependencies]
+python = "^3.7.3"
+nonebot2 = "^2.0.0-beta.1"
+nonebot-adapter-onebot = "^2.0.0-beta.1"
+Pillow = ">=8.0.0"
+pyenchant = "^3.2.2"
+
+[tool.poetry.dev-dependencies]
+nb-cli = "^0.6.0"
+black = "^22.1.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
