@@ -126,11 +126,14 @@ async def _(matcher: Matcher, event: GroupMessageEvent, state: T_State):
 async def stop_game(matcher: Matcher, cid: str):
     timers.pop(cid, None)
     if games.get(cid, None):
-        games.pop(cid)
-        await matcher.finish("猜单词超时，游戏结束")
+        game = games.pop(cid)
+        msg = "猜单词超时，游戏结束"
+        if len(game.guessed_words) >= 1:
+            msg += f"\n【单词】：{game.word}\n{game.meaning}"
+        await matcher.finish(msg)
 
 
-def set_timeout(matcher: Matcher, cid: str, timeout: float = 180):
+def set_timeout(matcher: Matcher, cid: str, timeout: float = 300):
     timer = timers.get(cid, None)
     if timer:
         timer.cancel()
