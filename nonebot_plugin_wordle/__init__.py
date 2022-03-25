@@ -33,7 +33,7 @@ __cmd__ = f"""
 灰色块代表此单词中没有此字母；
 猜出单词或用光次数则游戏结束；
 发送“结束”结束游戏；发送“提示”查看提示；
-可使用 -l/--length 指定单词长度；
+可使用 -l/--length 指定单词长度，默认为5；
 可使用 -d/--dic 指定词典，默认为CET4
 支持的词典：{"、".join(dic_list)}
 """.strip()
@@ -89,7 +89,7 @@ def game_running(event: MessageEvent) -> bool:
 
 
 def get_word_input(state: T_State, msg: str = EventPlainText()) -> bool:
-    if re.fullmatch(r"^[a-zA-Z]{3,15}$", msg):
+    if re.fullmatch(r"^[a-zA-Z]{3,8}$", msg):
         state["word"] = msg
         return True
     return False
@@ -177,8 +177,8 @@ async def handle_wordle(matcher: Matcher, event: GroupMessageEvent, argv: List[s
         if not (options.length and options.dic):
             await send("请指定单词长度和词典")
 
-        if options.length < 5 or options.length > 10:
-            await send("单词长度应在5~10之间")
+        if options.length < 3 or options.length > 8:
+            await send("单词长度应在3~8之间")
 
         if options.dic not in dic_list:
             await send("支持的词典：" + ", ".join(dic_list))
@@ -191,8 +191,11 @@ async def handle_wordle(matcher: Matcher, event: GroupMessageEvent, argv: List[s
         await send(f"你有{game.rows}次机会猜出单词，单词长度为{game.length}，请发送单词", game.draw())
 
     if options.stop:
-        games.pop(cid)
-        await send("游戏已结束")
+        game = games.pop(cid)
+        msg = "游戏已结束"
+        if len(game.guessed_words) >= 1:
+            msg += f"\n【单词】：{game.word}\n{game.meaning}"
+        await send(msg)
 
     game = games[cid]
     set_timeout(matcher, cid)
