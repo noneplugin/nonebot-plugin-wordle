@@ -11,7 +11,7 @@ from nonebot.exception import ParserExit
 from nonebot.typing import T_State
 from nonebot.rule import Rule, to_me, ArgumentParser
 from nonebot import on_command, on_shell_command, on_message
-from nonebot.params import ShellCommandArgv, CommandArg, EventPlainText
+from nonebot.params import ShellCommandArgv, CommandArg, EventPlainText, State
 from nonebot.adapters.onebot.v11 import (
     MessageEvent,
     GroupMessageEvent,
@@ -88,7 +88,7 @@ def game_running(event: MessageEvent) -> bool:
     return bool(games.get(cid, None))
 
 
-def get_word_input(state: T_State, msg: str = EventPlainText()) -> bool:
+def get_word_input(state: T_State = State(), msg: str = EventPlainText()) -> bool:
     if re.fullmatch(r"^[a-zA-Z]{3,8}$", msg):
         state["word"] = msg
         return True
@@ -118,7 +118,7 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 
 
 @word_matcher.handle()
-async def _(matcher: Matcher, event: GroupMessageEvent, state: T_State):
+async def _(matcher: Matcher, event: GroupMessageEvent, state: T_State = State()):
     word: str = state["word"]
     await handle_wordle(matcher, event, [word])
 
