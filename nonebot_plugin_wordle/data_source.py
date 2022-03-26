@@ -18,6 +18,7 @@ class Wordle(object):
     def __init__(self, word: str, meaning: str):
         self.word: str = word  # 单词
         self.meaning: str = meaning  # 单词释义
+        self.result = f"【单词】：{self.word}\n【释义】：{self.meaning}"
         self.word_lower: str = self.word.lower()
         self.length: int = len(word)  # 单词长度
         self.rows: int = self.length + 1  # 可猜次数

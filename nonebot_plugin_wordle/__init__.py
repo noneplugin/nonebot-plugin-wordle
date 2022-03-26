@@ -2,8 +2,8 @@ import re
 import shlex
 import asyncio
 from io import BytesIO
-from asyncio import TimerHandle
 from dataclasses import dataclass
+from asyncio import TimerHandle, Semaphore
 from typing import Dict, List, Optional, NoReturn
 
 from nonebot.matcher import Matcher
@@ -64,6 +64,7 @@ class Options:
 
 games: Dict[str, Wordle] = {}
 timers: Dict[str, TimerHandle] = {}
+mutex = Semaphore(1)
 
 wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 
@@ -72,7 +73,8 @@ wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 async def _(
     matcher: Matcher, event: GroupMessageEvent, argv: List[str] = ShellCommandArgv()
 ):
-    await handle_wordle(matcher, event, argv)
+    async with mutex:
+        await handle_wordle(matcher, event, argv)
 
 
 def get_cid(event: MessageEvent):
@@ -106,7 +108,8 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
             args = shlex.split(msg.extract_plain_text().strip())
         except:
             args = []
-        await handle_wordle(matcher, event, argv + args)
+        async with mutex:
+            await handle_wordle(matcher, event, argv + args)
 
 
 shortcut("猜单词", ["--length", "5", "--dic", "CET4"], rule=to_me())
@@ -120,7 +123,8 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 @word_matcher.handle()
 async def _(matcher: Matcher, event: GroupMessageEvent, state: T_State = State()):
     word: str = state["word"]
-    await handle_wordle(matcher, event, [word])
+    async with mutex:
+        await handle_wordle(matcher, event, [word])
 
 
 async def stop_game(matcher: Matcher, cid: str):
@@ -129,7 +133,7 @@ async def stop_game(matcher: Matcher, cid: str):
         game = games.pop(cid)
         msg = "猜单词超时，游戏结束"
         if len(game.guessed_words) >= 1:
-            msg += f"\n【单词】：{game.word}\n{game.meaning}"
+            msg += f"\n{game.result}"
         await matcher.finish(msg)
 
 
@@ -194,7 +198,7 @@ async def handle_wordle(matcher: Matcher, event: GroupMessageEvent, argv: List[s
         game = games.pop(cid)
         msg = "游戏已结束"
         if len(game.guessed_words) >= 1:
-            msg += f"\n【单词】：{game.word}\n{game.meaning}"
+            msg += f"\n{game.result}"
         await send(msg)
 
     game = games[cid]
@@ -215,7 +219,7 @@ async def handle_wordle(matcher: Matcher, event: GroupMessageEvent, argv: List[s
         games.pop(cid)
         await send(
             ("恭喜你猜出了单词！" if result == GuessResult.WIN else "很遗憾，没有人猜出来呢")
-            + f"\n【单词】：{game.word}\n{game.meaning}",
+            + f"\n{game.result}",
             game.draw(),
         )
     elif result == GuessResult.DUPLICATE:
