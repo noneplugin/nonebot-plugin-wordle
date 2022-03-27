@@ -52,44 +52,25 @@ class Wordle(object):
 
     def draw_block(self, color: Tuple[int, int, int], letter: str) -> IMG:
         block = Image.new("RGB", self.block_size, self.border_color)
-        block.paste(
-            Image.new(
-                "RGB",
-                (
-                    self.block_size[0] - self.border_width * 2,
-                    self.block_size[1] - self.border_width * 2,
-                ),
-                color,
-            ),
-            (self.border_width, self.border_width),
-        )
+        inner_w = self.block_size[0] - self.border_width * 2
+        inner_h = self.block_size[1] - self.border_width * 2
+        inner = Image.new("RGB", (inner_w, inner_h), color)
+        block.paste(inner, (self.border_width, self.border_width))
         if letter:
             letter = letter.upper()
             draw = ImageDraw.Draw(block)
             letter_size = self.font.getsize(letter)
-            draw.text(
-                (
-                    (self.block_size[0] - letter_size[0]) / 2,
-                    (self.block_size[1] - letter_size[1]) / 2,
-                ),
-                letter,
-                font=self.font,
-                fill=self.font_color,
-            )
+            x = (self.block_size[0] - letter_size[0]) / 2
+            y = (self.block_size[1] - letter_size[1]) / 2
+            draw.text((x, y), letter, font=self.font, fill=self.font_color)
         return block
 
     def draw(self) -> BytesIO:
-        board_width = (
-            self.length * self.block_size[0]
-            + (self.length - 1) * self.block_padding[0]
-            + 2 * self.padding[0]
-        )
-        board_height = (
-            self.rows * self.block_size[1]
-            + (self.rows - 1) * self.block_padding[1]
-            + 2 * self.padding[1]
-        )
-        board_size = (board_width, board_height)
+        board_w = self.length * self.block_size[0]
+        board_w += (self.length - 1) * self.block_padding[0] + 2 * self.padding[0]
+        board_h = self.rows * self.block_size[1]
+        board_h += (self.rows - 1) * self.block_padding[1] + 2 * self.padding[1]
+        board_size = (board_w, board_h)
         board = Image.new("RGB", board_size, self.bg_color)
 
         for i in range(self.rows):
@@ -105,17 +86,9 @@ class Wordle(object):
                 else:
                     color = self.bg_color
 
-                board.paste(
-                    self.draw_block(color, letter),
-                    (
-                        self.padding[0]
-                        + (self.block_size[0] + self.block_padding[0]) * j,
-                        (
-                            self.padding[1]
-                            + (self.block_size[1] + self.block_padding[1]) * i
-                        ),
-                    ),
-                )
+                x = self.padding[0] + (self.block_size[0] + self.block_padding[0]) * j
+                y = self.padding[1] + (self.block_size[1] + self.block_padding[1]) * i
+                board.paste(self.draw_block(color, letter), (x, y))
         return save_jpg(board)
 
     def get_hint(self) -> str:
@@ -127,26 +100,15 @@ class Wordle(object):
         return "".join([i if i in letters else "*" for i in self.word_lower])
 
     def draw_hint(self, hint: str) -> BytesIO:
-        board = Image.new(
-            "RGB",
-            (
-                self.length * self.block_size[0]
-                + (self.length - 1) * self.block_padding[0]
-                + 2 * self.padding[0],
-                self.block_size[1] + 2 * self.padding[1],
-            ),
-            self.bg_color,
-        )
+        board_w = self.length * self.block_size[0]
+        board_w += (self.length - 1) * self.block_padding[0] + 2 * self.padding[0]
+        board_h = self.block_size[1] + 2 * self.padding[1]
+        board = Image.new("RGB", (board_w, board_h), self.bg_color)
 
         for i in range(len(hint)):
             letter = hint[i].replace("*", "")
             color = self.correct_color if letter else self.bg_color
-
-            board.paste(
-                self.draw_block(color, letter),
-                (
-                    self.padding[0] + (self.block_size[0] + self.block_padding[0]) * i,
-                    (self.padding[1]),
-                ),
-            )
+            x = self.padding[0] + (self.block_size[0] + self.block_padding[0]) * i
+            y = self.padding[1]
+            board.paste(self.draw_block(color, letter), (x, y))
         return save_jpg(board)

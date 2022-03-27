@@ -211,6 +211,8 @@ async def handle_wordle(matcher: Matcher, event: GroupMessageEvent, argv: List[s
         await send(image=game.draw_hint(hint))
 
     word = options.word
+    if not re.fullmatch(r"^[a-zA-Z]{3,8}$", word):
+        await send()
     if len(word) != game.length:
         await send("请发送正确长度的单词")
 
