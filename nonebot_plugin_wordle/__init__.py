@@ -71,7 +71,7 @@ wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 
 @wordle.handle()
 async def _(
-    matcher: Matcher, event: GroupMessageEvent, argv: List[str] = ShellCommandArgv()
+    matcher: Matcher, event: MessageEvent, argv: List[str] = ShellCommandArgv()
 ):
     async with mutex:
         await handle_wordle(matcher, event, argv)
@@ -102,7 +102,7 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
 
     @command.handle()
     async def _(
-        matcher: Matcher, event: GroupMessageEvent, msg: Message = CommandArg()
+        matcher: Matcher, event: MessageEvent, msg: Message = CommandArg()
     ):
         try:
             args = shlex.split(msg.extract_plain_text().strip())
@@ -121,7 +121,7 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 
 
 @word_matcher.handle()
-async def _(matcher: Matcher, event: GroupMessageEvent, state: T_State = State()):
+async def _(matcher: Matcher, event: MessageEvent, state: T_State = State()):
     word: str = state["word"]
     async with mutex:
         await handle_wordle(matcher, event, [word])
@@ -148,7 +148,7 @@ def set_timeout(matcher: Matcher, cid: str, timeout: float = 300):
     timers[cid] = timer
 
 
-async def handle_wordle(matcher: Matcher, event: GroupMessageEvent, argv: List[str]):
+async def handle_wordle(matcher: Matcher, event: MessageEvent, argv: List[str]):
     async def send(
         message: Optional[str] = None, image: Optional[BytesIO] = None
     ) -> NoReturn:
