@@ -3,7 +3,7 @@ import shlex
 import asyncio
 from io import BytesIO
 from dataclasses import dataclass
-from asyncio import TimerHandle, Semaphore
+from asyncio import TimerHandle
 from typing import Dict, List, Optional, NoReturn
 
 from nonebot.matcher import Matcher
@@ -64,7 +64,6 @@ class Options:
 
 games: Dict[str, Wordle] = {}
 timers: Dict[str, TimerHandle] = {}
-mutex = Semaphore(1)
 
 wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 
@@ -73,8 +72,7 @@ wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 async def _(
     matcher: Matcher, event: MessageEvent, argv: List[str] = ShellCommandArgv()
 ):
-    async with mutex:
-        await handle_wordle(matcher, event, argv)
+    await handle_wordle(matcher, event, argv)
 
 
 def get_cid(event: MessageEvent):
@@ -108,8 +106,7 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
             args = shlex.split(msg.extract_plain_text().strip())
         except:
             args = []
-        async with mutex:
-            await handle_wordle(matcher, event, argv + args)
+        await handle_wordle(matcher, event, argv + args)
 
 
 shortcut("猜单词", ["--length", "5", "--dic", "CET4"], rule=to_me())
@@ -123,8 +120,7 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 @word_matcher.handle()
 async def _(matcher: Matcher, event: MessageEvent, state: T_State = State()):
     word: str = state["word"]
-    async with mutex:
-        await handle_wordle(matcher, event, [word])
+    await handle_wordle(matcher, event, [word])
 
 
 async def stop_game(matcher: Matcher, cid: str):
