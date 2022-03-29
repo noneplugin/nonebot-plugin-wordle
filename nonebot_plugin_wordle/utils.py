@@ -15,10 +15,11 @@ words_dir = data_dir / "words"
 dic_list = [f.stem for f in words_dir.iterdir() if f.suffix == ".json"]
 
 en_dict = enchant.Dict("en")
+en_us_dict = enchant.Dict("en_US")
 
 
 def legal_word(word: str) -> bool:
-    return en_dict.check(word)
+    return en_dict.check(word) or en_us_dict.check(word)
 
 
 def random_word(dic_name: str = "CET4", word_length: int = 5) -> Tuple[str, str]:
