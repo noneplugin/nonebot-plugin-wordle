@@ -78,7 +78,7 @@ class Wordle(object):
             for j in range(self.length):
                 letter = self.guessed_words[i][j] if len(self.guessed_words) > i else ""
                 if letter:
-                    if letter == word_temp[j]:
+                    if letter == self.word_lower[j]:
                         color = self.correct_color
                         """
                         这里和原wordle判定有差异
@@ -89,6 +89,8 @@ class Wordle(object):
                         """
                     elif letter in word_temp and self.guessed_words[i][word_temp.find(letter)] != letter:
                         color = self.exist_color
+                        """这里修改是为了防止出现答案liner，猜词inner时，第一个n黄第二个n绿的情况"""
+                        word_temp.replace(letter, '_', 1)
                     else:
                         color = self.wrong_color
                 else:
