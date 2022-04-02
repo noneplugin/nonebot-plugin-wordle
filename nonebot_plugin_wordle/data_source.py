@@ -74,13 +74,23 @@ class Wordle(object):
         board = Image.new("RGB", board_size, self.bg_color)
 
         for i in range(self.rows):
+            word_temp = self.word_lower  # 临时变量
             for j in range(self.length):
                 letter = self.guessed_words[i][j] if len(self.guessed_words) > i else ""
                 if letter:
                     if letter == self.word_lower[j]:
                         color = self.correct_color
-                    elif letter in self.word_lower:
+                        """
+                        这里和原wordle判定有差异
+                        以输入apple，答案adapt为例
+                        应该apple的第一个p是黄色，第二个p是灰色
+                        代表答案中只有一个p，且不在第二个位置
+                        所以进行修改：
+                        """
+                    elif letter in word_temp and self.guessed_words[i][word_temp.find(letter)] != letter:
                         color = self.exist_color
+                        """这里修改是为了防止出现答案liner，猜词inner时，第一个n黄第二个n绿的情况"""
+                        word_temp.replace(letter, '_', 1)
                     else:
                         color = self.wrong_color
                 else:
