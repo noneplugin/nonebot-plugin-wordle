@@ -40,7 +40,7 @@ pip install nonebot_plugin_wordle
 
 可使用 -d / --dic 指定词典，默认为 CET4
 
-支持的词典：GRE、考研、GMAT、专四、TOFEL、SAT、专八、IELTS、CET4、CET6
+支持的词典：GRE、考研、GMAT、专四、TOEFL、SAT、专八、IELTS、CET4、CET6
 
 
 或使用 `wordle` 指令：
