@@ -31,10 +31,10 @@ def random_word(dic_name: str = "CET4", word_length: int = 5) -> Tuple[str, str]
         return word, meaning
 
 
-def save_jpg(frame: IMG) -> BytesIO:
+def save_png(frame: IMG) -> BytesIO:
     output = BytesIO()
-    frame = frame.convert("RGB")
-    frame.save(output, format="jpeg")
+    frame = frame.convert("RGBA")
+    frame.save(output, format="png")
     return output
 
 

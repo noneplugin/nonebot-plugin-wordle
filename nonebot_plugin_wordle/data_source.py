@@ -4,7 +4,7 @@ from PIL import Image, ImageDraw
 from PIL.Image import Image as IMG
 from typing import Tuple, List, Optional
 
-from .utils import legal_word, load_font, save_jpg
+from .utils import legal_word, load_font, save_png
 
 
 class GuessResult(Enum):
@@ -101,7 +101,7 @@ class Wordle(object):
                 x = self.padding[0] + (self.block_size[0] + self.block_padding[0]) * j
                 y = self.padding[1] + (self.block_size[1] + self.block_padding[1]) * i
                 board.paste(self.draw_block(color, letter), (x, y))
-        return save_jpg(board)
+        return save_png(board)
 
     def get_hint(self) -> str:
         letters = set()
@@ -123,4 +123,4 @@ class Wordle(object):
             x = self.padding[0] + (self.block_size[0] + self.block_padding[0]) * i
             y = self.padding[1]
             board.paste(self.draw_block(color, letter), (x, y))
-        return save_jpg(board)
+        return save_png(board)
