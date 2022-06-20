@@ -6,9 +6,10 @@ from dataclasses import dataclass
 from asyncio import TimerHandle
 from typing import Dict, List, Optional, NoReturn
 
+from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.exception import ParserExit
-from nonebot.typing import T_State
+from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule, to_me, ArgumentParser
 from nonebot import on_command, on_shell_command, on_message
 from nonebot.params import ShellCommandArgv, CommandArg, EventPlainText, State
@@ -19,30 +20,31 @@ from nonebot.adapters.onebot.v11 import (
     MessageSegment,
 )
 
-from .data_source import Wordle, GuessResult
 from .utils import dic_list, random_word
+from .data_source import Wordle, GuessResult
 
-
-__help__plugin_name__ = "wordle"
-__des__ = "wordle猜单词游戏"
-__cmd__ = f"""
-@我 + “猜单词”开始游戏；
-答案为指定长度单词，发送对应长度单词即可；
-绿色块代表此单词中有此字母且位置正确；
-黄色块代表此单词中有此字母，但该字母所处位置不对；
-灰色块代表此单词中没有此字母；
-猜出单词或用光次数则游戏结束；
-发送“结束”结束游戏；发送“提示”查看提示；
-可使用 -l/--length 指定单词长度，默认为5；
-可使用 -d/--dic 指定词典，默认为CET4
-支持的词典：{"、".join(dic_list)}
-""".strip()
-__short_cmd__ = "@我 猜单词"
-__example__ = """
-@小Q 猜单词
-wordle -l 6 -d CET6
-""".strip()
-__usage__ = f"{__des__}\n\nUsage:\n{__cmd__}\n\nExample:\n{__example__}"
+__plugin_meta__ = PluginMetadata(
+    name="猜单词",
+    description="wordle猜单词游戏",
+    usage=(
+        "@我 + “猜单词”开始游戏；"
+        "答案为指定长度单词，发送对应长度单词即可；"
+        "绿色块代表此单词中有此字母且位置正确；"
+        "黄色块代表此单词中有此字母，但该字母所处位置不对；"
+        "灰色块代表此单词中没有此字母；"
+        "猜出单词或用光次数则游戏结束；"
+        "发送“结束”结束游戏；发送“提示”查看提示；"
+        "可使用 -l/--length 指定单词长度，默认为5；"
+        "可使用 -d/--dic 指定词典，默认为CET4"
+        f"支持的词典：{'、'.join(dic_list)}"
+    ),
+    extra={
+        "unique_name": "wordle",
+        "example": "@小Q 猜单词\nwordle -l 6 -d CET6",
+        "author": "meetwq <meetwq@gmail.com>",
+        "version": "0.1.8",
+    },
+)
 
 
 parser = ArgumentParser("wordle", description="猜单词")
@@ -159,7 +161,7 @@ async def handle_wordle(matcher: Matcher, event: MessageEvent, argv: List[str]):
         args = parser.parse_args(argv)
     except ParserExit as e:
         if e.status == 0:
-            await send(__usage__)
+            await send(__plugin_meta__.usage)
         await send()
 
     options = Options(**vars(args))
