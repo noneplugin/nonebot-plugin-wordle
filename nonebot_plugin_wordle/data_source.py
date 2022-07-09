@@ -91,7 +91,7 @@ class Wordle(object):
                         结果为apple的第一个p是黄色，第二个p是灰色
                         代表答案中只有一个p，且不在第二个位置
                         """
-                        word_temp.replace(letter, "_", 1)
+                        word_temp = word_temp.replace(letter, "_", 1)
                         color = self.exist_color
                     else:
                         color = self.wrong_color
