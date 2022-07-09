@@ -42,7 +42,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "wordle",
         "example": "@小Q 猜单词\nwordle -l 6 -d CET6",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.1.9",
+        "version": "0.1.10",
     },
 )
 
