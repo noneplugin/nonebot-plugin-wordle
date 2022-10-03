@@ -2,8 +2,8 @@ import re
 import shlex
 import asyncio
 from io import BytesIO
-from dataclasses import dataclass
 from asyncio import TimerHandle
+from dataclasses import dataclass
 from typing import Dict, List, Optional, NoReturn
 
 from nonebot.typing import T_State
@@ -12,7 +12,7 @@ from nonebot.exception import ParserExit
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import Rule, to_me, ArgumentParser
 from nonebot import on_command, on_shell_command, on_message
-from nonebot.params import ShellCommandArgv, CommandArg, EventPlainText, State
+from nonebot.params import ShellCommandArgv, CommandArg, EventPlainText
 from nonebot.adapters.onebot.v11 import (
     MessageEvent,
     GroupMessageEvent,
@@ -42,7 +42,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "wordle",
         "example": "@小Q 猜单词\nwordle -l 6 -d CET6",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.1.10",
+        "version": "0.1.11",
     },
 )
 
@@ -90,7 +90,7 @@ def game_running(event: MessageEvent) -> bool:
     return bool(games.get(cid, None))
 
 
-def get_word_input(state: T_State = State(), msg: str = EventPlainText()) -> bool:
+def get_word_input(state: T_State, msg: str = EventPlainText()) -> bool:
     if re.fullmatch(r"^[a-zA-Z]{3,8}$", msg):
         state["word"] = msg
         return True
@@ -118,7 +118,7 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 
 
 @word_matcher.handle()
-async def _(matcher: Matcher, event: MessageEvent, state: T_State = State()):
+async def _(matcher: Matcher, event: MessageEvent, state: T_State):
     word: str = state["word"]
     await handle_wordle(matcher, event, [word])
 
