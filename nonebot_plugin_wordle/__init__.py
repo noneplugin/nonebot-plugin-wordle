@@ -4,21 +4,34 @@ import asyncio
 from io import BytesIO
 from asyncio import TimerHandle
 from dataclasses import dataclass
-from typing import Dict, List, Optional, NoReturn
+from typing import Dict, List, Optional, NoReturn, Union
 
 from nonebot.typing import T_State
 from nonebot.matcher import Matcher
 from nonebot.exception import ParserExit
 from nonebot.plugin import PluginMetadata
-from nonebot.rule import Rule, to_me, ArgumentParser
+from nonebot.rule import Rule, ArgumentParser
 from nonebot import on_command, on_shell_command, on_message
-from nonebot.params import ShellCommandArgv, CommandArg, EventPlainText
-from nonebot.adapters.onebot.v11 import (
-    MessageEvent,
-    GroupMessageEvent,
-    Message,
-    MessageSegment,
+from nonebot.params import (
+    ShellCommandArgv,
+    CommandArg,
+    CommandStart,
+    EventPlainText,
+    EventToMe,
 )
+
+from nonebot.adapters.onebot.v11 import Bot as V11Bot
+from nonebot.adapters.onebot.v11 import Message as V11Msg
+from nonebot.adapters.onebot.v11 import MessageSegment as V11MsgSeg
+from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
+from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
+
+from nonebot.adapters.onebot.v12 import Bot as V12Bot
+from nonebot.adapters.onebot.v12 import Message as V12Msg
+from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
+from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
+from nonebot.adapters.onebot.v12 import GroupMessageEvent as V12GMEvent
+from nonebot.adapters.onebot.v12 import ChannelMessageEvent as V12CMEvent
 
 from .utils import dic_list, random_word
 from .data_source import Wordle, GuessResult
@@ -42,7 +55,7 @@ __plugin_meta__ = PluginMetadata(
         "unique_name": "wordle",
         "example": "@小Q 猜单词\nwordle -l 6 -d CET6",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.1.11",
+        "version": "0.2.0",
     },
 )
 
@@ -72,21 +85,34 @@ wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 
 @wordle.handle()
 async def _(
-    matcher: Matcher, event: MessageEvent, argv: List[str] = ShellCommandArgv()
+    bot: Union[V11Bot, V12Bot],
+    matcher: Matcher,
+    event: Union[V11MEvent, V12MEvent],
+    argv: List[str] = ShellCommandArgv(),
 ):
-    await handle_wordle(matcher, event, argv)
+    await handle_wordle(bot, matcher, event, argv)
 
 
-def get_cid(event: MessageEvent):
-    return (
-        f"group_{event.group_id}"
-        if isinstance(event, GroupMessageEvent)
-        else f"private_{event.user_id}"
-    )
+def get_cid(bot: Union[V11Bot, V12Bot], event: Union[V11MEvent, V12MEvent]):
+    if isinstance(event, V11MEvent):
+        cid = f"{bot.self_id}_{event.sub_type}_"
+    else:
+        cid = f"{bot.self_id}_{event.detail_type}_"
+
+    if isinstance(event, V11GMEvent) or isinstance(event, V12GMEvent):
+        cid += str(event.group_id)
+    elif isinstance(event, V12CMEvent):
+        cid += f"{event.guild_id}_{event.channel_id}"
+    else:
+        cid += str(event.user_id)
+
+    return cid
 
 
-def game_running(event: MessageEvent) -> bool:
-    cid = get_cid(event)
+def game_running(
+    bot: Union[V11Bot, V12Bot], event: Union[V11MEvent, V12MEvent]
+) -> bool:
+    cid = get_cid(bot, event)
     return bool(games.get(cid, None))
 
 
@@ -101,15 +127,25 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
     command = on_command(cmd, **kwargs, block=True, priority=12)
 
     @command.handle()
-    async def _(matcher: Matcher, event: MessageEvent, msg: Message = CommandArg()):
+    async def _(
+        bot: Union[V11Bot, V12Bot],
+        matcher: Matcher,
+        event: Union[V11MEvent, V12MEvent],
+        msg: Union[V11Msg, V12Msg] = CommandArg(),
+    ):
         try:
             args = shlex.split(msg.extract_plain_text().strip())
         except:
             args = []
-        await handle_wordle(matcher, event, argv + args)
+        await handle_wordle(bot, matcher, event, argv + args)
 
 
-shortcut("猜单词", ["--length", "5", "--dic", "CET4"], rule=to_me())
+# 命令前缀为空则需要to_me，否则不需要
+def smart_to_me(command_start: str = CommandStart(), to_me: bool = EventToMe()) -> bool:
+    return bool(command_start) or to_me
+
+
+shortcut("猜单词", ["--length", "5", "--dic", "CET4"], rule=smart_to_me)
 shortcut("提示", ["--hint"], aliases={"给个提示"}, rule=game_running)
 shortcut("结束", ["--stop"], aliases={"停", "停止游戏", "结束游戏"}, rule=game_running)
 
@@ -118,9 +154,14 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 
 
 @word_matcher.handle()
-async def _(matcher: Matcher, event: MessageEvent, state: T_State):
+async def _(
+    bot: Union[V11Bot, V12Bot],
+    matcher: Matcher,
+    event: Union[V11MEvent, V12MEvent],
+    state: T_State,
+):
     word: str = state["word"]
-    await handle_wordle(matcher, event, [word])
+    await handle_wordle(bot, matcher, event, [word])
 
 
 async def stop_game(matcher: Matcher, cid: str):
@@ -144,15 +185,31 @@ def set_timeout(matcher: Matcher, cid: str, timeout: float = 300):
     timers[cid] = timer
 
 
-async def handle_wordle(matcher: Matcher, event: MessageEvent, argv: List[str]):
+async def handle_wordle(
+    bot: Union[V11Bot, V12Bot],
+    matcher: Matcher,
+    event: Union[V11MEvent, V12MEvent],
+    argv: List[str],
+):
     async def send(
         message: Optional[str] = None, image: Optional[BytesIO] = None
     ) -> NoReturn:
         if not (message or image):
             await matcher.finish()
-        msg = Message()
-        if image:
-            msg.append(MessageSegment.image(image))
+
+        if isinstance(bot, V11Bot):
+            msg = V11Msg()
+            if image:
+                msg.append(V11MsgSeg.image(image))
+        else:
+            msg = V12Msg()
+            if image:
+                resp = await bot.upload_file(
+                    type="data", name="wordle", data=image.getvalue()
+                )
+                file_id = resp["file_id"]
+                msg.append(V12MsgSeg.image(file_id))
+
         if message:
             msg.append(message)
         await matcher.finish(msg)
@@ -166,7 +223,7 @@ async def handle_wordle(matcher: Matcher, event: MessageEvent, argv: List[str]):
 
     options = Options(**vars(args))
 
-    cid = get_cid(event)
+    cid = get_cid(bot, event)
     if not games.get(cid, None):
         if options.word:
             await send()
