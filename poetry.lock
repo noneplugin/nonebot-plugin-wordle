@@ -581,20 +581,6 @@ dotenv = ["python-dotenv (>=0.10.4)"]
 email = ["email-validator (>=1.0.3)"]
 
 [[package]]
-name = "pyenchant"
-version = "3.2.2"
-description = "Python bindings for the Enchant spellchecking system"
-category = "main"
-optional = false
-python-versions = ">=3.5"
-files = [
-    {file = "pyenchant-3.2.2-py3-none-any.whl", hash = "sha256:5facc821ece957208a81423af7d6ec7810dad29697cb0d77aae81e4e11c8e5a6"},
-    {file = "pyenchant-3.2.2-py3-none-win32.whl", hash = "sha256:5a636832987eaf26efe971968f4d1b78e81f62bca2bde0a9da210c7de43c3bce"},
-    {file = "pyenchant-3.2.2-py3-none-win_amd64.whl", hash = "sha256:6153f521852e23a5add923dbacfbf4bebbb8d70c4e4bad609a8e0f9faeb915d1"},
-    {file = "pyenchant-3.2.2.tar.gz", hash = "sha256:1cf830c6614362a78aab78d50eaf7c6c93831369c52e1bb64ffae1df0341e637"},
-]
-
-[[package]]
 name = "pygtrie"
 version = "2.5.0"
 description = "A pure Python trie data structure implementation."
@@ -604,6 +590,18 @@ python-versions = "*"
 files = [
     {file = "pygtrie-2.5.0-py3-none-any.whl", hash = "sha256:8795cda8105493d5ae159a5bef313ff13156c5d4d72feddefacaad59f8c8ce16"},
     {file = "pygtrie-2.5.0.tar.gz", hash = "sha256:203514ad826eb403dab1d2e2ddd034e0d1534bbe4dbe0213bb0593f66beba4e2"},
+]
+
+[[package]]
+name = "pyspellchecker"
+version = "0.7.1"
+description = "Pure python spell checker based on work by Peter Norvig"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+files = [
+    {file = "pyspellchecker-0.7.1-py3-none-any.whl", hash = "sha256:9fac7e3abf2a11eb1660906dc513bc9f92bd49795f136bb1a56ac1f59f5498b0"},
+    {file = "pyspellchecker-0.7.1.tar.gz", hash = "sha256:ed46a7218a363ef1a348fac14c9fef95b0aca5daa7744389d70843fcc0961b31"},
 ]
 
 [[package]]
@@ -1025,4 +1023,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.8"
-content-hash = "d3323b943b25c77edf694e9d52ba95cfdcede8f1ac4c763ed6c1e3ad58bf071a"
+content-hash = "0a6782e5128c232f779c07266c1c8699d89bf4bc611acbf66f17dd18c1b857d4"
