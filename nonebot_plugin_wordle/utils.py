@@ -1,12 +1,12 @@
 import json
 import random
-import enchant
 from io import BytesIO
 from pathlib import Path
 from typing import Tuple
 from PIL import ImageFont
 from PIL.Image import Image as IMG
 from PIL.ImageFont import FreeTypeFont
+from spellchecker import SpellChecker
 
 data_dir = Path(__file__).parent / "resources"
 fonts_dir = data_dir / "fonts"
@@ -14,12 +14,11 @@ words_dir = data_dir / "words"
 
 dic_list = [f.stem for f in words_dir.iterdir() if f.suffix == ".json"]
 
-en_dict = enchant.Dict("en")
-en_us_dict = enchant.Dict("en_US")
+spell = SpellChecker()
 
 
 def legal_word(word: str) -> bool:
-    return en_dict.check(word) or en_us_dict.check(word)
+    return not spell.unknown((word,))
 
 
 def random_word(dic_name: str = "CET4", word_length: int = 5) -> Tuple[str, str]:
