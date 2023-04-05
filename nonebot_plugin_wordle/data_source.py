@@ -74,17 +74,19 @@ class Wordle(object):
         board = Image.new("RGB", board_size, self.bg_color)
 
         for i in range(self.rows):
-            word_temp = self.word_lower  # 临时变量
+            word_temp = ""  # 临时变量
+            for j in range(self.length):
+                if len(self.guessed_words) > i and self.guessed_words[i][j] != self.word_lower[j]:
+                    word_temp += self.word_lower[j]
+                else:
+                    word_temp += "_"
             for j in range(self.length):
                 letter = self.guessed_words[i][j] if len(self.guessed_words) > i else ""
                 if letter:
                     if letter == self.word_lower[j]:
                         color = self.correct_color
 
-                    elif (
-                        letter in word_temp
-                        and self.guessed_words[i][word_temp.find(letter)] != letter
-                    ):
+                    elif letter in word_temp:
                         """
                         一个字母的黄色和绿色数量与答案中的数量保持一致
                         以输入apple，答案adapt为例
