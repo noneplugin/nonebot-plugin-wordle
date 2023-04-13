@@ -1,8 +1,9 @@
 from enum import Enum
 from io import BytesIO
+from typing import List, Optional, Tuple
+
 from PIL import Image, ImageDraw
 from PIL.Image import Image as IMG
-from typing import Tuple, List, Optional
 
 from .utils import legal_word, load_font, save_png
 
@@ -73,36 +74,44 @@ class Wordle(object):
         board_size = (board_w, board_h)
         board = Image.new("RGB", board_size, self.bg_color)
 
-        for i in range(self.rows):
-            word_temp = ""  # 临时变量
-            for j in range(self.length):
-                if len(self.guessed_words) > i and self.guessed_words[i][j] != self.word_lower[j]:
-                    word_temp += self.word_lower[j]
-                else:
-                    word_temp += "_"
-            for j in range(self.length):
-                letter = self.guessed_words[i][j] if len(self.guessed_words) > i else ""
-                if letter:
-                    if letter == self.word_lower[j]:
-                        color = self.correct_color
+        for row in range(self.rows):
+            if row < len(self.guessed_words):
+                guessed_word = self.guessed_words[row]
 
-                    elif letter in word_temp:
+                word_incorrect = ""  # 猜错的字母
+                for i in range(self.length):
+                    if guessed_word[i] != self.word_lower[i]:
+                        word_incorrect += self.word_lower[i]
+                    else:
+                        word_incorrect += "_"  # 猜对的字母用下划线代替
+
+                blocks: List[IMG] = []
+                for i in range(self.length):
+                    letter = guessed_word[i]
+                    if letter == self.word_lower[i]:
+                        color = self.correct_color
+                    elif letter in word_incorrect:
                         """
                         一个字母的黄色和绿色数量与答案中的数量保持一致
                         以输入apple，答案adapt为例
                         结果为apple的第一个p是黄色，第二个p是灰色
                         代表答案中只有一个p，且不在第二个位置
                         """
-                        word_temp = word_temp.replace(letter, "_", 1)
+                        word_incorrect = word_incorrect.replace(letter, "_", 1)
                         color = self.exist_color
                     else:
                         color = self.wrong_color
-                else:
-                    color = self.bg_color
+                    blocks.append(self.draw_block(color, letter))
 
-                x = self.padding[0] + (self.block_size[0] + self.block_padding[0]) * j
-                y = self.padding[1] + (self.block_size[1] + self.block_padding[1]) * i
-                board.paste(self.draw_block(color, letter), (x, y))
+            else:
+                blocks = [
+                    self.draw_block(self.bg_color, "") for _ in range(self.length)
+                ]
+
+            for col, block in enumerate(blocks):
+                x = self.padding[0] + (self.block_size[0] + self.block_padding[0]) * col
+                y = self.padding[1] + (self.block_size[1] + self.block_padding[1]) * row
+                board.paste(block, (x, y))
         return save_png(board)
 
     def get_hint(self) -> str:

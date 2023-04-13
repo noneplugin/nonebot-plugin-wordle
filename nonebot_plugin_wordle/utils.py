@@ -3,6 +3,7 @@ import random
 from io import BytesIO
 from pathlib import Path
 from typing import Tuple
+
 from PIL import ImageFont
 from PIL.Image import Image as IMG
 from PIL.ImageFont import FreeTypeFont

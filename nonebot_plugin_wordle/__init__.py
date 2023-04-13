@@ -1,40 +1,38 @@
+import asyncio
 import re
 import shlex
-import asyncio
-from io import BytesIO
 from asyncio import TimerHandle
 from dataclasses import dataclass
-from typing import Dict, List, Optional, NoReturn, Union
+from io import BytesIO
+from typing import Dict, List, NoReturn, Optional, Union
 
-from nonebot.typing import T_State
-from nonebot.matcher import Matcher
+from nonebot import on_command, on_message, on_shell_command
+from nonebot.adapters.onebot.v11 import Bot as V11Bot
+from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
+from nonebot.adapters.onebot.v11 import Message as V11Msg
+from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
+from nonebot.adapters.onebot.v11 import MessageSegment as V11MsgSeg
+from nonebot.adapters.onebot.v12 import Bot as V12Bot
+from nonebot.adapters.onebot.v12 import ChannelMessageEvent as V12CMEvent
+from nonebot.adapters.onebot.v12 import GroupMessageEvent as V12GMEvent
+from nonebot.adapters.onebot.v12 import Message as V12Msg
+from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
+from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
 from nonebot.exception import ParserExit
-from nonebot.plugin import PluginMetadata
-from nonebot.rule import Rule, ArgumentParser
-from nonebot import on_command, on_shell_command, on_message
+from nonebot.matcher import Matcher
 from nonebot.params import (
-    ShellCommandArgv,
     CommandArg,
     CommandStart,
     EventPlainText,
     EventToMe,
+    ShellCommandArgv,
 )
+from nonebot.plugin import PluginMetadata
+from nonebot.rule import ArgumentParser, Rule
+from nonebot.typing import T_State
 
-from nonebot.adapters.onebot.v11 import Bot as V11Bot
-from nonebot.adapters.onebot.v11 import Message as V11Msg
-from nonebot.adapters.onebot.v11 import MessageSegment as V11MsgSeg
-from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
-from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
-
-from nonebot.adapters.onebot.v12 import Bot as V12Bot
-from nonebot.adapters.onebot.v12 import Message as V12Msg
-from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
-from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
-from nonebot.adapters.onebot.v12 import GroupMessageEvent as V12GMEvent
-from nonebot.adapters.onebot.v12 import ChannelMessageEvent as V12CMEvent
-
+from .data_source import GuessResult, Wordle
 from .utils import dic_list, random_word
-from .data_source import Wordle, GuessResult
 
 __plugin_meta__ = PluginMetadata(
     name="猜单词",
