@@ -42,6 +42,7 @@ class Wordle(object):
     def guess(self, word: str) -> Optional[GuessResult]:
         word = word.lower()
         if word == self.word_lower:
+            self.guessed_words.append(word)
             return GuessResult.WIN
         if word in self.guessed_words:
             return GuessResult.DUPLICATE
