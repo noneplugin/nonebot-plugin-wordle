@@ -40,14 +40,14 @@ class Wordle(object):
         self.font_color = (255, 255, 255)  # 文字颜色
 
     def guess(self, word: str) -> Optional[GuessResult]:
-        if not legal_word(word):
-            return GuessResult.ILLEGAL
         word = word.lower()
-        if word in self.guessed_words:
-            return GuessResult.DUPLICATE
-        self.guessed_words.append(word)
         if word == self.word_lower:
             return GuessResult.WIN
+        if word in self.guessed_words:
+            return GuessResult.DUPLICATE
+        if not legal_word(word):
+            return GuessResult.ILLEGAL
+        self.guessed_words.append(word)
         if len(self.guessed_words) == self.rows:
             return GuessResult.LOSS
 

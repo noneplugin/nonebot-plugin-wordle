@@ -4,20 +4,10 @@ import shlex
 from asyncio import TimerHandle
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Dict, List, NoReturn, Optional, Union
+from typing import Dict, List, NoReturn, Optional
 
-from nonebot import on_command, on_message, on_shell_command
-from nonebot.adapters.onebot.v11 import Bot as V11Bot
-from nonebot.adapters.onebot.v11 import GroupMessageEvent as V11GMEvent
-from nonebot.adapters.onebot.v11 import Message as V11Msg
-from nonebot.adapters.onebot.v11 import MessageEvent as V11MEvent
-from nonebot.adapters.onebot.v11 import MessageSegment as V11MsgSeg
-from nonebot.adapters.onebot.v12 import Bot as V12Bot
-from nonebot.adapters.onebot.v12 import ChannelMessageEvent as V12CMEvent
-from nonebot.adapters.onebot.v12 import GroupMessageEvent as V12GMEvent
-from nonebot.adapters.onebot.v12 import Message as V12Msg
-from nonebot.adapters.onebot.v12 import MessageEvent as V12MEvent
-from nonebot.adapters.onebot.v12 import MessageSegment as V12MsgSeg
+from nonebot import on_command, on_message, on_shell_command, require
+from nonebot.adapters import Bot, Event, Message
 from nonebot.exception import ParserExit
 from nonebot.matcher import Matcher
 from nonebot.params import (
@@ -30,6 +20,21 @@ from nonebot.params import (
 from nonebot.plugin import PluginMetadata
 from nonebot.rule import ArgumentParser, Rule
 from nonebot.typing import T_State
+
+require("nonebot_plugin_saa")
+require("nonebot_plugin_session")
+
+from nonebot_plugin_saa import Image, MessageFactory
+from nonebot_plugin_saa import __plugin_meta__ as saa_plugin_meta
+from nonebot_plugin_session import SessionIdType
+from nonebot_plugin_session import __plugin_meta__ as session_plugin_meta
+from nonebot_plugin_session import extract_session
+
+assert saa_plugin_meta.supported_adapters
+assert session_plugin_meta.supported_adapters
+supported_adapters = (
+    saa_plugin_meta.supported_adapters & session_plugin_meta.supported_adapters
+)
 
 from .data_source import GuessResult, Wordle
 from .utils import dic_list, random_word
@@ -49,11 +54,14 @@ __plugin_meta__ = PluginMetadata(
         "可使用 -d/--dic 指定词典，默认为CET4\n"
         f"支持的词典：{'、'.join(dic_list)}"
     ),
+    type="application",
+    homepage="https://github.com/noneplugin/nonebot-plugin-wordle",
+    supported_adapters=supported_adapters,
     extra={
         "unique_name": "wordle",
         "example": "@小Q 猜单词\nwordle -l 6 -d CET6",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.2.1",
+        "version": "0.3.0",
     },
 )
 
@@ -83,33 +91,19 @@ wordle = on_shell_command("wordle", parser=parser, block=True, priority=13)
 
 @wordle.handle()
 async def _(
-    bot: Union[V11Bot, V12Bot],
+    bot: Bot,
     matcher: Matcher,
-    event: Union[V11MEvent, V12MEvent],
+    event: Event,
     argv: List[str] = ShellCommandArgv(),
 ):
     await handle_wordle(bot, matcher, event, argv)
 
 
-def get_cid(bot: Union[V11Bot, V12Bot], event: Union[V11MEvent, V12MEvent]):
-    if isinstance(event, V11MEvent):
-        cid = f"{bot.self_id}_{event.sub_type}_"
-    else:
-        cid = f"{bot.self_id}_{event.detail_type}_"
-
-    if isinstance(event, V11GMEvent) or isinstance(event, V12GMEvent):
-        cid += str(event.group_id)
-    elif isinstance(event, V12CMEvent):
-        cid += f"{event.guild_id}_{event.channel_id}"
-    else:
-        cid += str(event.user_id)
-
-    return cid
+def get_cid(bot: Bot, event: Event):
+    return extract_session(bot, event).get_id(SessionIdType.GROUP)
 
 
-def game_running(
-    bot: Union[V11Bot, V12Bot], event: Union[V11MEvent, V12MEvent]
-) -> bool:
+def game_running(bot: Bot, event: Event) -> bool:
     cid = get_cid(bot, event)
     return bool(games.get(cid, None))
 
@@ -126,10 +120,10 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
 
     @command.handle()
     async def _(
-        bot: Union[V11Bot, V12Bot],
+        bot: Bot,
         matcher: Matcher,
-        event: Union[V11MEvent, V12MEvent],
-        msg: Union[V11Msg, V12Msg] = CommandArg(),
+        event: Event,
+        msg: Message = CommandArg(),
     ):
         try:
             args = shlex.split(msg.extract_plain_text().strip())
@@ -145,7 +139,7 @@ def smart_to_me(command_start: str = CommandStart(), to_me: bool = EventToMe()) 
 
 shortcut("猜单词", ["--length", "5", "--dic", "CET4"], rule=smart_to_me)
 shortcut("提示", ["--hint"], aliases={"给个提示"}, rule=game_running)
-shortcut("结束", ["--stop"], aliases={"停", "停止游戏", "结束游戏"}, rule=game_running)
+shortcut("结束", ["--stop"], aliases={"结束游戏", "停止游戏"}, rule=game_running)
 
 
 word_matcher = on_message(Rule(game_running) & get_word_input, block=True, priority=12)
@@ -153,9 +147,9 @@ word_matcher = on_message(Rule(game_running) & get_word_input, block=True, prior
 
 @word_matcher.handle()
 async def _(
-    bot: Union[V11Bot, V12Bot],
+    bot: Bot,
     matcher: Matcher,
-    event: Union[V11MEvent, V12MEvent],
+    event: Event,
     state: T_State,
 ):
     word: str = state["word"]
@@ -184,9 +178,9 @@ def set_timeout(matcher: Matcher, cid: str, timeout: float = 300):
 
 
 async def handle_wordle(
-    bot: Union[V11Bot, V12Bot],
+    bot: Bot,
     matcher: Matcher,
-    event: Union[V11MEvent, V12MEvent],
+    event: Event,
     argv: List[str],
 ):
     async def send(
@@ -195,22 +189,15 @@ async def handle_wordle(
         if not (message or image):
             await matcher.finish()
 
-        if isinstance(bot, V11Bot):
-            msg = V11Msg()
-            if image:
-                msg.append(V11MsgSeg.image(image))
-        else:
-            msg = V12Msg()
-            if image:
-                resp = await bot.upload_file(
-                    type="data", name="wordle", data=image.getvalue()
-                )
-                file_id = resp["file_id"]
-                msg.append(V12MsgSeg.image(file_id))
-
+        msg_builder = MessageFactory([])
+        if image:
+            msg_builder.append(Image(image))
         if message:
-            msg.append(message)
-        await matcher.finish(msg)
+            if image:
+                message = "\n" + message
+            msg_builder.append(message)
+        await msg_builder.send()
+        await matcher.finish()
 
     try:
         args = parser.parse_args(argv)
