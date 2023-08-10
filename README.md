@@ -20,7 +20,7 @@ pip install nonebot_plugin_wordle
 
 ### 使用
 
-**以下命令需要加[命令前缀](https://v2.nonebot.dev/docs/api/config#Config-command_start) (默认为`/`)，可自行设置为空**
+**以下命令需要加[命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator) (默认为`/`)，可自行设置为空**
 
 ```
 @机器人 + 猜单词
