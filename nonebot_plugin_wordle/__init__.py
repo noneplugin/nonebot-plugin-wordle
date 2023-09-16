@@ -1,5 +1,3 @@
-import json
-import os
 import asyncio
 import re
 import shlex
@@ -39,7 +37,7 @@ supported_adapters = (
 )
 
 from .data_source import GuessResult, Wordle
-from .utils import dic_list, random_word
+from .utils import dic_list, random_word, update_json_file
 
 __plugin_meta__ = PluginMetadata(
     name="猜单词",
@@ -133,34 +131,6 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
             args = []
         await handle_wordle(bot, matcher, event, argv + args)
 
-directory = "data/wordle/"
-filepath = os.path.join(directory, "wordle_data.json")
-
-def update_json_file(self, user_id: str, vague_count: int, precise_count: int, is_correct: int):
-    global filepath
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-
-    try:
-        with open(filepath, "r") as f:
-            data = json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        data = {}
-
-    user_data = data.get(str(user_id), {})
-    length_data = user_data.get(str(self.length), {})
-    
-    length_data['vague_letter_count'] = length_data.get('vague_letter_count', 0) + vague_count
-    length_data['precise_letter_count'] = length_data.get('precise_letter_count', 0) + precise_count
-    length_data['guessed_times'] = length_data.get('guessed_times', 0) + 1
-    length_data['is_correct'] = length_data.get('is_correct', 0) + is_correct
-
-    # 更新数据结构
-    user_data[str(self.length)] = length_data
-    data[str(user_id)] = user_data
-    
-    with open(filepath, "w") as f:
-        json.dump(data, f, indent=4)
 
 # 命令前缀为空则需要to_me，否则不需要
 def smart_to_me(command_start: str = CommandStart(), to_me: bool = EventToMe()) -> bool:
