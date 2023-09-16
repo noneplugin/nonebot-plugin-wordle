@@ -1,3 +1,5 @@
+import json
+
 from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Tuple
@@ -24,6 +26,8 @@ class Wordle(object):
         self.length: int = len(word)  # 单词长度
         self.rows: int = self.length + 1  # 可猜次数
         self.guessed_words: List[str] = []  # 记录已猜单词
+        self.vague_letter_count = 0 # 模糊字母数
+        self.precise_letter_count = 0 # 准确字母数
 
         self.block_size = (40, 40)  # 文字块尺寸
         self.block_padding = (10, 10)  # 文字块之间间距
@@ -40,6 +44,8 @@ class Wordle(object):
         self.font_color = (255, 255, 255)  # 文字颜色
 
     def guess(self, word: str) -> Optional[GuessResult]:
+        self.precise_letter_count = 0
+        self.vague_letter_count = 0
         word = word.lower()
         if word == self.word_lower:
             self.guessed_words.append(word)
@@ -48,6 +54,16 @@ class Wordle(object):
             return GuessResult.DUPLICATE
         if not legal_word(word):
             return GuessResult.ILLEGAL
+        # 更新猜对字母且位置相同的数量
+        for guessed_letter, correct_letter in zip(word, self.word_lower):
+            if guessed_letter == correct_letter:
+                self.precise_letter_count += 1
+        # 更新猜对字母但位置不同的数量
+        for guessed_letter in word:
+            if guessed_letter in self.word_lower and word.count(guessed_letter) <= self.word_lower.count(guessed_letter):
+                self.vague_letter_count += 1
+        # 减去重复计数部分
+        self.vague_letter_count -= self.precise_letter_count
         self.guessed_words.append(word)
         if len(self.guessed_words) == self.rows:
             return GuessResult.LOSS

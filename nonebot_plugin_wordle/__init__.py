@@ -1,3 +1,4 @@
+import json
 import asyncio
 import re
 import shlex
@@ -132,6 +133,28 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
         await handle_wordle(bot, matcher, event, argv + args)
 
 
+def update_json_file(self, user_id: str, vague_count: int, precise_count: int):
+    try:
+        with open("wordle_data.json", "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        data = {}
+    
+    user_data = data.get(str(user_id), {})
+    
+    length_data = user_data.get(str(self.length), {})
+    
+    # 更新模糊和精确猜对数量
+    length_data['vague_letter_count'] = length_data.get('vague_letter_count', 0) + vague_count
+    length_data['precise_letter_count'] = length_data.get('precise_letter_count', 0) + precise_count
+    
+    # 更新数据结构
+    user_data[str(self.length)] = length_data
+    data[str(user_id)] = user_data
+    
+    with open("wordle_data.json", "w") as f:
+        json.dump(data, f, indent=4)
+
 # 命令前缀为空则需要to_me，否则不需要
 def smart_to_me(command_start: str = CommandStart(), to_me: bool = EventToMe()) -> bool:
     return bool(command_start) or to_me
@@ -255,6 +278,10 @@ async def handle_wordle(
         await send("请发送正确长度的单词")
 
     result = game.guess(word)
+    vague_count = game.vague_letter_count
+    precise_count = game.precise_letter_count
+    user_id = event.user_id
+    update_json_file(game, user_id, vague_count, precise_count)
     if result in [GuessResult.WIN, GuessResult.LOSS]:
         games.pop(cid)
         await send(
