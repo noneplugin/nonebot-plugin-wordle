@@ -133,21 +133,21 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
         await handle_wordle(bot, matcher, event, argv + args)
 
 
-def update_json_file(self, user_id: str, vague_count: int, precise_count: int):
+def update_json_file(self, user_id: str, vague_count: int, precise_count: int, is_correct: int):
     try:
         with open("wordle_data.json", "r") as f:
             data = json.load(f)
     except json.JSONDecodeError:
         data = {}
-    
+
     user_data = data.get(str(user_id), {})
-    
     length_data = user_data.get(str(self.length), {})
     
-    # 更新模糊和精确猜对数量
     length_data['vague_letter_count'] = length_data.get('vague_letter_count', 0) + vague_count
     length_data['precise_letter_count'] = length_data.get('precise_letter_count', 0) + precise_count
-    
+    length_data['guessed_times'] = length_data.get('guessed_times', 0) + 1
+    length_data['is_correct'] = length_data.get('is_correct', 0) + is_correct
+
     # 更新数据结构
     user_data[str(self.length)] = length_data
     data[str(user_id)] = user_data
@@ -277,11 +277,17 @@ async def handle_wordle(
     if len(word) != game.length:
         await send("请发送正确长度的单词")
 
+    is_correct = 0
     result = game.guess(word)
     vague_count = game.vague_letter_count
     precise_count = game.precise_letter_count
     user_id = event.user_id
-    update_json_file(game, user_id, vague_count, precise_count)
+
+    if result == GuessResult.WIN:
+        is_correct += 1
+
+    update_json_file(game, user_id, vague_count, precise_count, is_correct)
+
     if result in [GuessResult.WIN, GuessResult.LOSS]:
         games.pop(cid)
         await send(

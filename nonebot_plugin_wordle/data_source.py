@@ -1,5 +1,3 @@
-import json
-
 from enum import Enum
 from io import BytesIO
 from typing import List, Optional, Tuple
