@@ -1,4 +1,5 @@
 import json
+import os
 import asyncio
 import re
 import shlex
@@ -132,12 +133,18 @@ def shortcut(cmd: str, argv: List[str] = [], **kwargs):
             args = []
         await handle_wordle(bot, matcher, event, argv + args)
 
+directory = "data/wordle/"
+filepath = os.path.join(directory, "wordle_data.json")
 
 def update_json_file(self, user_id: str, vague_count: int, precise_count: int, is_correct: int):
+    global filepath
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+
     try:
-        with open("wordle_data.json", "r") as f:
+        with open(filepath, "r") as f:
             data = json.load(f)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, FileNotFoundError):
         data = {}
 
     user_data = data.get(str(user_id), {})
@@ -152,7 +159,7 @@ def update_json_file(self, user_id: str, vague_count: int, precise_count: int, i
     user_data[str(self.length)] = length_data
     data[str(user_id)] = user_data
     
-    with open("wordle_data.json", "w") as f:
+    with open(filepath, "w") as f:
         json.dump(data, f, indent=4)
 
 # 命令前缀为空则需要to_me，否则不需要
