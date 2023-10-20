@@ -17,7 +17,7 @@ from nonebot.params import (
     EventToMe,
     ShellCommandArgv,
 )
-from nonebot.plugin import PluginMetadata
+from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from nonebot.rule import ArgumentParser, Rule
 from nonebot.typing import T_State
 
@@ -25,16 +25,7 @@ require("nonebot_plugin_saa")
 require("nonebot_plugin_session")
 
 from nonebot_plugin_saa import Image, MessageFactory
-from nonebot_plugin_saa import __plugin_meta__ as saa_plugin_meta
-from nonebot_plugin_session import SessionIdType
-from nonebot_plugin_session import __plugin_meta__ as session_plugin_meta
-from nonebot_plugin_session import extract_session
-
-assert saa_plugin_meta.supported_adapters
-assert session_plugin_meta.supported_adapters
-supported_adapters = (
-    saa_plugin_meta.supported_adapters & session_plugin_meta.supported_adapters
-)
+from nonebot_plugin_session import SessionIdType, extract_session
 
 from .data_source import GuessResult, Wordle
 from .utils import dic_list, random_word
@@ -56,12 +47,14 @@ __plugin_meta__ = PluginMetadata(
     ),
     type="application",
     homepage="https://github.com/noneplugin/nonebot-plugin-wordle",
-    supported_adapters=supported_adapters,
+    supported_adapters=inherit_supported_adapters(
+        "nonebot_plugin_saa", "nonebot_plugin_session"
+    ),
     extra={
         "unique_name": "wordle",
         "example": "@小Q 猜单词\nwordle -l 6 -d CET6",
         "author": "meetwq <meetwq@gmail.com>",
-        "version": "0.3.3",
+        "version": "0.3.4",
     },
 )
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "nonebot_plugin_wordle"
-version = "0.3.3"
+version = "0.3.4"
 description = "Nonebot2 wordle猜单词插件"
 authors = ["meetwq <meetwq@gmail.com>"]
 license = "MIT"
@@ -10,9 +10,9 @@ repository = "https://github.com/noneplugin/nonebot-plugin-wordle"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-nonebot2 = { version = "^2.0.0", extras = ["fastapi"] }
+nonebot2 = { version = "^2.0.1", extras = ["fastapi"] }
 nonebot-plugin-send-anything-anywhere = "^0.3.0"
-nonebot-plugin-session = "^0.1.0"
+nonebot-plugin-session = "^0.2.0"
 Pillow = ">=9.0.0,<11.0.0"
 pyspellchecker = "^0.7.0"
 
