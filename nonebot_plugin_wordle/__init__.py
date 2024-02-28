@@ -195,9 +195,12 @@ async def handle_word(
     if result in [GuessResult.WIN, GuessResult.LOSS]:
         stop_game(user_id)
         msg = Text(
-            "恭喜你猜出了单词！"
-            if result == GuessResult.WIN
-            else "很遗憾，没有人猜出来呢"
+            (
+                "恭喜你猜出了单词！"
+                if result == GuessResult.WIN
+                else "很遗憾，没有人猜出来呢"
+            )
+            + f"\n{game.result}"
         ) + Image(raw=await run_sync(game.draw)())
         await msg.send()
 
