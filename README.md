@@ -23,7 +23,7 @@ pip install nonebot_plugin_wordle
 **以下命令需要加[命令前缀](https://nonebot.dev/docs/appendices/config#command-start-和-command-separator) (默认为`/`)，可自行设置为空**
 
 ```
-@机器人 + 猜单词
+@机器人 + 猜单词/wordle
 ```
 
 绿色块代表此单词中有此字母且位置正确；
@@ -40,16 +40,9 @@ pip install nonebot_plugin_wordle
 
 可使用 -l / --length 指定单词长度，默认为 5
 
-可使用 -d / --dic 指定词典，默认为 CET4
+可使用 -d / --dictionary 指定词典，默认为 CET4
 
 支持的词典：GRE、考研、GMAT、专四、TOEFL、SAT、专八、IELTS、CET4、CET6
-
-
-或使用 `wordle` 指令：
-
-```
-wordle [-l --length <length>] [-d --dic <dic>] [--hint] [--stop] [word]
-```
 
 
 ### 示例

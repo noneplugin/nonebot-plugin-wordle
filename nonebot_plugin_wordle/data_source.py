@@ -15,7 +15,7 @@ class GuessResult(Enum):
     ILLEGAL = 3  # 单词不合法
 
 
-class Wordle(object):
+class Wordle:
     def __init__(self, word: str, meaning: str):
         self.word: str = word  # 单词
         self.meaning: str = meaning  # 单词释义
