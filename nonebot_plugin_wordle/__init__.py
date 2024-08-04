@@ -3,16 +3,17 @@ from asyncio import TimerHandle
 from typing import Annotated, Any, Optional
 
 from nonebot import on_regex, require
+from nonebot.log import logger
 from nonebot.matcher import Matcher
-from nonebot.params import RegexDict
+from nonebot.params import EventToMe, RegexDict
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
-from nonebot.rule import to_me
 from nonebot.utils import run_sync
 
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_session")
 
 from nonebot_plugin_alconna import (
+    AlcMatches,
     Alconna,
     AlconnaQuery,
     Args,
@@ -68,14 +69,15 @@ def game_not_running(user_id: UserId) -> bool:
     return user_id not in games
 
 
+wordle_alc = Alconna(
+    "wordle",
+    Option("-l|--length", Args["length", int], help_text="单词长度"),
+    Option("-d|--dictionary", Args["dictionary", str], help_text="词典"),
+)
 wordle = on_alconna(
-    Alconna(
-        "wordle",
-        Option("-l|--length", Args["length", int], help_text="单词长度"),
-        Option("-d|--dictionary", Args["dictionary", str], help_text="词典"),
-    ),
+    wordle_alc,
     aliases=("猜单词",),
-    rule=to_me() & game_not_running,
+    rule=game_not_running,
     use_cmd_start=True,
     block=True,
     priority=13,
@@ -130,9 +132,18 @@ def set_timeout(matcher: Matcher, user_id: str, timeout: float = 300):
 async def _(
     matcher: Matcher,
     user_id: UserId,
+    alc_matches: AlcMatches,
+    to_me: bool = EventToMe(),
     length: Query[int] = AlconnaQuery("length", 5),
     dictionary: Query[str] = AlconnaQuery("dictionary", "CET4"),
 ):
+    header_match = str(alc_matches.header_match.result)
+    command = str(wordle_alc.command)
+    if not (to_me or bool(header_match.rstrip(command))):
+        logger.debug("Not to me, ignore")
+        matcher.block = False
+        await matcher.finish()
+
     if length.result < 3 or length.result > 8:
         await matcher.finish("单词长度应在3~8之间")
 
