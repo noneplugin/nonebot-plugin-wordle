@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import TimerHandle
-from typing import Any, Dict, Optional, Type
+from typing import Annotated, Any, Optional
 
 from nonebot import on_regex, require
 from nonebot.matcher import Matcher
@@ -8,7 +8,6 @@ from nonebot.params import RegexDict
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from nonebot.rule import to_me
 from nonebot.utils import run_sync
-from typing_extensions import Annotated
 
 require("nonebot_plugin_alconna")
 require("nonebot_plugin_session")
@@ -55,8 +54,8 @@ __plugin_meta__ = PluginMetadata(
 )
 
 
-games: Dict[str, Wordle] = {}
-timers: Dict[str, TimerHandle] = {}
+games: dict[str, Wordle] = {}
+timers: dict[str, TimerHandle] = {}
 
 UserId = Annotated[str, SessionId(SessionIdType.GROUP)]
 
@@ -96,7 +95,7 @@ wordle_stop = on_alconna(
     block=True,
     priority=13,
 )
-wordle_word: Optional[Type[Matcher]] = None
+wordle_word: Optional[type[Matcher]] = None
 
 
 def stop_game(user_id: str):
@@ -184,7 +183,7 @@ async def _(matcher: Matcher, user_id: UserId):
 
 
 async def handle_word(
-    matcher: Matcher, user_id: UserId, matched: Dict[str, Any] = RegexDict()
+    matcher: Matcher, user_id: UserId, matched: dict[str, Any] = RegexDict()
 ):
     game = games[user_id]
     set_timeout(matcher, user_id)

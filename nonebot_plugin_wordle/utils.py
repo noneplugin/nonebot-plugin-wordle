@@ -2,7 +2,6 @@ import json
 import random
 from io import BytesIO
 from pathlib import Path
-from typing import Tuple
 
 from PIL import ImageFont
 from PIL.Image import Image as IMG
@@ -22,7 +21,7 @@ def legal_word(word: str) -> bool:
     return not spell.unknown((word,))
 
 
-def random_word(dic_name: str = "CET4", word_length: int = 5) -> Tuple[str, str]:
+def random_word(dic_name: str = "CET4", word_length: int = 5) -> tuple[str, str]:
     with (words_dir / f"{dic_name}.json").open("r", encoding="utf-8") as f:
         data: dict = json.load(f)
         data = {k: v for k, v in data.items() if len(k) == word_length}

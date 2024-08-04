@@ -1,6 +1,6 @@
 from enum import Enum
 from io import BytesIO
-from typing import List, Optional, Tuple
+from typing import Optional
 
 from PIL import Image, ImageDraw
 from PIL.Image import Image as IMG
@@ -23,7 +23,7 @@ class Wordle:
         self.word_lower: str = self.word.lower()
         self.length: int = len(word)  # 单词长度
         self.rows: int = self.length + 1  # 可猜次数
-        self.guessed_words: List[str] = []  # 记录已猜单词
+        self.guessed_words: list[str] = []  # 记录已猜单词
 
         self.block_size = (40, 40)  # 文字块尺寸
         self.block_padding = (10, 10)  # 文字块之间间距
@@ -52,7 +52,7 @@ class Wordle:
         if len(self.guessed_words) == self.rows:
             return GuessResult.LOSS
 
-    def draw_block(self, color: Tuple[int, int, int], letter: str) -> IMG:
+    def draw_block(self, color: tuple[int, int, int], letter: str) -> IMG:
         block = Image.new("RGB", self.block_size, self.border_color)
         inner_w = self.block_size[0] - self.border_width * 2
         inner_h = self.block_size[1] - self.border_width * 2
@@ -86,7 +86,7 @@ class Wordle:
                     else:
                         word_incorrect += "_"  # 猜对的字母用下划线代替
 
-                blocks: List[IMG] = []
+                blocks: list[IMG] = []
                 for i in range(self.length):
                     letter = guessed_word[i]
                     if letter == self.word_lower[i]:
