@@ -1,6 +1,6 @@
 import asyncio
 from asyncio import TimerHandle
-from typing import Annotated, Any, Optional
+from typing import Annotated, Any
 
 from nonebot import on_regex, require
 from nonebot.log import logger
@@ -69,12 +69,20 @@ def game_not_running(user_id: UserId) -> bool:
     return user_id not in games
 
 
+def same_user(game_user_id: str):
+    def _same_user(user_id: UserId) -> bool:
+        return user_id in games and user_id == game_user_id
+
+    return _same_user
+
+
 wordle_alc = Alconna(
     "wordle",
     Option("-l|--length", Args["length", int], help_text="单词长度"),
     Option("-d|--dictionary", Args["dictionary", str], help_text="词典"),
 )
-wordle = on_alconna(
+
+matcher_wordle = on_alconna(
     wordle_alc,
     aliases=("猜单词",),
     rule=game_not_running,
@@ -82,14 +90,14 @@ wordle = on_alconna(
     block=True,
     priority=13,
 )
-wordle_hint = on_alconna(
+matcher_hint = on_alconna(
     "提示",
     rule=game_is_running,
     use_cmd_start=True,
     block=True,
     priority=13,
 )
-wordle_stop = on_alconna(
+matcher_stop = on_alconna(
     "结束",
     aliases=("结束游戏", "结束猜单词"),
     rule=game_is_running,
@@ -97,15 +105,15 @@ wordle_stop = on_alconna(
     block=True,
     priority=13,
 )
-wordle_word: Optional[type[Matcher]] = None
+matchers_word: dict[str, type[Matcher]] = {}
 
 
 def stop_game(user_id: str):
     if timer := timers.pop(user_id, None):
         timer.cancel()
     games.pop(user_id, None)
-    if wordle_word:
-        wordle_word.destroy()
+    if matcher := matchers_word.pop(user_id, None):
+        matcher.destroy()
 
 
 async def stop_game_timeout(matcher: Matcher, user_id: str):
@@ -128,7 +136,7 @@ def set_timeout(matcher: Matcher, user_id: str, timeout: float = 300):
     timers[user_id] = timer
 
 
-@wordle.handle()
+@matcher_wordle.handle()
 async def _(
     matcher: Matcher,
     user_id: UserId,
@@ -155,14 +163,14 @@ async def _(
 
     games[user_id] = game
     set_timeout(matcher, user_id)
-    global wordle_word
-    wordle_word = on_regex(
+    matcher_word = on_regex(
         rf"^(?P<word>[a-zA-Z]{{{length.result}}})$",
-        rule=game_is_running,
+        rule=same_user(user_id),
         block=True,
         priority=14,
     )
-    wordle_word.append_handler(handle_word)
+    matcher_word.append_handler(handle_word)
+    matchers_word[user_id] = matcher_word
 
     msg = Text(
         f"你有{game.rows}次机会猜出单词，单词长度为{game.length}，请发送单词"
@@ -170,7 +178,7 @@ async def _(
     await msg.send()
 
 
-@wordle_hint.handle()
+@matcher_hint.handle()
 async def _(matcher: Matcher, user_id: UserId):
     game = games[user_id]
     set_timeout(matcher, user_id)
@@ -182,7 +190,7 @@ async def _(matcher: Matcher, user_id: UserId):
     await UniMessage.image(raw=await run_sync(game.draw_hint)(hint)).send()
 
 
-@wordle_stop.handle()
+@matcher_stop.handle()
 async def _(matcher: Matcher, user_id: UserId):
     game = games[user_id]
     stop_game(user_id)
