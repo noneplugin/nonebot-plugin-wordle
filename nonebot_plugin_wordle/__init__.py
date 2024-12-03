@@ -5,12 +5,12 @@ from typing import Annotated, Any
 from nonebot import on_regex, require
 from nonebot.log import logger
 from nonebot.matcher import Matcher
-from nonebot.params import EventToMe, RegexDict
+from nonebot.params import Depends, EventToMe, RegexDict
 from nonebot.plugin import PluginMetadata, inherit_supported_adapters
 from nonebot.utils import run_sync
 
 require("nonebot_plugin_alconna")
-require("nonebot_plugin_session")
+require("nonebot_plugin_uninfo")
 
 from nonebot_plugin_alconna import (
     AlcMatches,
@@ -24,7 +24,7 @@ from nonebot_plugin_alconna import (
     UniMessage,
     on_alconna,
 )
-from nonebot_plugin_session import SessionId, SessionIdType
+from nonebot_plugin_uninfo import Uninfo
 
 from .data_source import GuessResult, Wordle
 from .utils import dic_list, random_word
@@ -47,18 +47,20 @@ __plugin_meta__ = PluginMetadata(
     type="application",
     homepage="https://github.com/noneplugin/nonebot-plugin-wordle",
     supported_adapters=inherit_supported_adapters(
-        "nonebot_plugin_alconna", "nonebot_plugin_session"
+        "nonebot_plugin_alconna", "nonebot_plugin_uninfo"
     ),
-    extra={
-        "example": "@我 猜单词 -l 6 -d CET6",
-    },
 )
 
 
 games: dict[str, Wordle] = {}
 timers: dict[str, TimerHandle] = {}
 
-UserId = Annotated[str, SessionId(SessionIdType.GROUP)]
+
+def get_user_id(uninfo: Uninfo) -> str:
+    return f"{uninfo.scope}_{uninfo.self_id}_{uninfo.scene_path}"
+
+
+UserId = Annotated[str, Depends(get_user_id)]
 
 
 def game_is_running(user_id: UserId) -> bool:

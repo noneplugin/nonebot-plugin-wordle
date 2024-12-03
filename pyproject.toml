@@ -12,7 +12,7 @@ repository = "https://github.com/noneplugin/nonebot-plugin-wordle"
 python = "^3.9"
 nonebot2 = "^2.3.0"
 nonebot-plugin-alconna = ">=0.45.1,<1.0.0"
-nonebot-plugin-session = "^0.3.0"
+nonebot-plugin-uninfo = ">=0.4.0,<1.0.0"
 pillow = "^10.0.0"
 pyspellchecker = "^0.8.0"
 
